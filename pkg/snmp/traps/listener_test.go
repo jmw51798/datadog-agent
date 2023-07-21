@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gosnmp/gosnmp"
+	"github.com/jmw51798/goroutineid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

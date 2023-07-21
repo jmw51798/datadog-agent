@@ -585,7 +585,7 @@ require (
 	github.com/godror/knownpb v0.1.0 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/hashicorp/hcl/v2 v2.17.0 // indirect
-	github.com/jmw51798/goroutineid v0.0.0-20230721224718-6065ba210083 // indirect
+	github.com/jmw51798/goroutineid v0.0.0-20230721232229-5ef99dcaee58 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.75.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/sharedcomponent v0.75.0 // indirect
