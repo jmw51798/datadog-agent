@@ -115,6 +115,7 @@ func TestServerV3(t *testing.T) {
 	require.NoError(t, err)
 	defer trapListener.Stop()
 
+	start := time.Now()
 	sendTestV3Trap(t, config, &gosnmp.UsmSecurityParameters{
 		UserName:                 "user",
 		AuthoritativeEngineID:    "foobarbaz",
@@ -125,6 +126,8 @@ func TestServerV3(t *testing.T) {
 	})
 	//t.FailNow() //JMW DOES fail test immediately
 	packet := receivePacket(t, trapListener, defaultTimeout) //JMW defaultTimeout=1s
+	duration := time.Now().Sub(start)
+	fmt.Println("receivePacket() returned after", duration)
 	//t.FailNow() //JMW doesn't fail test immediately
 	fmt.Printf("JMW receivePacket() returned packet=%v\n", packet)
 	// https://github.com/stretchr/testify
