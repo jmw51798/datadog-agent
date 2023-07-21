@@ -105,7 +105,7 @@ func (t *TrapListener) receiveTrap(p *gosnmp.SnmpPacket, u *net.UDPAddr) {
 	log.Debugf("Packet received from %s on listener %s", u.String(), t.config.Addr())
 	trapsPackets.Add(1)
 	fmt.Printf("JMW receiveTrap() before t.packets <- packet\n") //JMWJMW BLOCKS!
-	t.packets <- packet
+	t.packets <- packet //JMWJMW will this get an error if receiving side of channel goes away?
 	fmt.Printf("JMW receiveTrap() after t.packets <- packet\n")
 	//JMW close channel? doesn't seem to help) close(t.packets)
 }
