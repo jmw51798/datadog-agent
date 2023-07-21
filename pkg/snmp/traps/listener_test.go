@@ -10,31 +10,11 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
 	"testing"
 	"time"
-	//JMW for goid()
-	"runtime"
-	"strconv"
-	"strings"
 
 	"github.com/gosnmp/gosnmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-// https://zhimin-wen.medium.com/logging-for-concurrent-go-programs-abe46ef14d58
-//
-//	https://github.com/golang/net/blob/master/http2/gotrack.go#L51
-//
-// JMWJMW make this a github repo and figure out how to import it
-func goid() int {
-	var buf [64]byte
-	n := runtime.Stack(buf[:], false)
-	idField := strings.Fields(strings.TrimPrefix(string(buf[:n]), "goroutine "))[0]
-	id, err := strconv.Atoi(idField)
-	if err != nil {
-		panic(fmt.Sprintf("cannot get goroutine id: %v", err))
-	}
-	return id
- }
 
 var serverPort = getFreePort()
 
@@ -118,7 +98,7 @@ func TestServerV2BadCredentials(t *testing.T) {
 }
 
 func TestServerV3(t *testing.T) {
-	fmt.Printf("JMW TestServerV3() goid=%d\n", goid())
+	fmt.Printf("JMW TestServerV3() goid=%d\n", goroutineid.Get())
 	mockSender := mocksender.NewMockSender("snmp-traps-telemetry")
 	mockSender.SetupAcceptAll()
 
@@ -206,7 +186,7 @@ func TestListenerTrapsReceivedTelemetry(t *testing.T) {
 
 func receivePacket(t *testing.T, listener *TrapListener, timeoutDuration time.Duration) *SnmpPacket {
 	//t.FailNow() //JMW DOES fail test immediately
-	fmt.Printf("JMW receivePacket() goid=%d\n", goid())
+	fmt.Printf("JMW receivePacket() goid=%d\n", goroutineid.Get())
 	fmt.Printf("JMW receivePacket() timeoutDuration=%v\n", timeoutDuration)
 
 	timeout := time.After(timeoutDuration)

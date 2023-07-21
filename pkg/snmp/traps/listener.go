@@ -83,7 +83,7 @@ func (t *TrapListener) Stop() {
 }
 
 func (t *TrapListener) receiveTrap(p *gosnmp.SnmpPacket, u *net.UDPAddr) {
-	fmt.Printf("JMW receiveTrap() goid=%d\n", goid())
+	fmt.Printf("JMW receiveTrap() goid=%d\n", goroutineid.Get())
 	packet := &SnmpPacket{Content: p, Addr: u, Timestamp: time.Now().UnixMilli(), Namespace: t.config.Namespace}
 	tags := packet.getTags()
 
