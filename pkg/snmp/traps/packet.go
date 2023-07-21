@@ -19,7 +19,7 @@ type SnmpPacket struct {
 }
 
 // PacketsChannel is the type of channels of trap packets.
-type PacketsChannel = chan *SnmpPacket
+type PacketsChannel = chan *SnmpPacket //JMW
 
 // GetTags returns a list of tags associated to an SNMP trap packet.
 func (p *SnmpPacket) getTags() []string {

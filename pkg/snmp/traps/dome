@@ -1,0 +1,13 @@
+iter=0
+while true
+do
+  iter=$(($iter + 1))
+  echo iter $iter
+  go test -v -run TestServerV3$ ./...
+  if [ $? -ne 0 ]
+  then
+    echo FAILED
+    exit 1
+  fi
+done
+

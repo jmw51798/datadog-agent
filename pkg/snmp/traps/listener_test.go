@@ -6,18 +6,39 @@
 package traps
 
 import (
+	"fmt" //JMW
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
 	"testing"
 	"time"
+	//JMW for goid()
+	"runtime"
+	"strconv"
+	"strings"
 
 	"github.com/gosnmp/gosnmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+// https://zhimin-wen.medium.com/logging-for-concurrent-go-programs-abe46ef14d58
+//
+//	https://github.com/golang/net/blob/master/http2/gotrack.go#L51
+//
+// JMWJMW make this a github repo and figure out how to import it
+func goid() int {
+	var buf [64]byte
+	n := runtime.Stack(buf[:], false)
+	idField := strings.Fields(strings.TrimPrefix(string(buf[:n]), "goroutine "))[0]
+	id, err := strconv.Atoi(idField)
+	if err != nil {
+		panic(fmt.Sprintf("cannot get goroutine id: %v", err))
+	}
+	return id
+ }
+
 var serverPort = getFreePort()
 
-const defaultTimeout = 1 * time.Second
+const defaultTimeout = 1 * time.Second //JMW longer?
 
 func TestListenV1GenericTrap(t *testing.T) {
 	mockSender := mocksender.NewMockSender("snmp-traps-telemetry")
@@ -97,6 +118,7 @@ func TestServerV2BadCredentials(t *testing.T) {
 }
 
 func TestServerV3(t *testing.T) {
+	fmt.Printf("JMW TestServerV3() goid=%d\n", goid())
 	mockSender := mocksender.NewMockSender("snmp-traps-telemetry")
 	mockSender.SetupAcceptAll()
 
@@ -104,7 +126,10 @@ func TestServerV3(t *testing.T) {
 	config := Config{Port: serverPort, Users: []UserV3{userV3}}
 	Configure(t, config)
 
+	//JMWORIG
 	packetOutChan := make(PacketsChannel)
+	//packetOutChan := make(PacketsChannel, 1) //JMW try buffered channel to see if it works better for timeout/ticket cases of select - IT DOES
+	//JMWJMW where else is this used?  What type of channels are used?  buffered or non-buffered?
 	trapListener, err := startSNMPTrapListener(config, mockSender, packetOutChan)
 	require.NoError(t, err)
 	defer trapListener.Stop()
@@ -117,9 +142,24 @@ func TestServerV3(t *testing.T) {
 		PrivacyPassphrase:        "password",
 		PrivacyProtocol:          gosnmp.AES,
 	})
-	packet := receivePacket(t, trapListener, defaultTimeout)
+	//t.FailNow() //JMW DOES fail test immediately
+	packet := receivePacket(t, trapListener, defaultTimeout) //JMW defaultTimeout=1s
+	//t.FailNow() //JMW doesn't fail test immediately
+	fmt.Printf("JMW receivePacket() returned packet=%v\n", packet)
+	// https://github.com/stretchr/testify
+	// The require package provides same global functions as the assert package, but instead of returning a boolean result they terminate current test. These functions must be called from the goroutine running the test or benchmark function, not from other goroutines created during the test. Otherwise race conditions may occur.
+	//
+	// https://pkg.go.dev/testing#T.FailNow
+	// FailNow marks the function as having failed and stops its execution by calling runtime.Goexit (which then runs all deferred calls in the current goroutine). Execution will continue at the next test or benchmark. FailNow must be called from the goroutine running the test or benchmark function, not from other goroutines created during the test. Calling FailNow does not stop those other goroutines.
+
+	fmt.Printf("JMW1\n")
+	if packet == nil {
+		t.FailNow()
+	}
 	require.NotNil(t, packet)
 	assertVariables(t, packet)
+	assertVariables(t, packet) //JMW doesn't fail test immediately
+	fmt.Printf("JMW end of TestServerV3()\n")
 }
 
 func TestServerV3BadCredentials(t *testing.T) {
@@ -165,6 +205,10 @@ func TestListenerTrapsReceivedTelemetry(t *testing.T) {
 }
 
 func receivePacket(t *testing.T, listener *TrapListener, timeoutDuration time.Duration) *SnmpPacket {
+	//t.FailNow() //JMW DOES fail test immediately
+	fmt.Printf("JMW receivePacket() goid=%d\n", goid())
+	fmt.Printf("JMW receivePacket() timeoutDuration=%v\n", timeoutDuration)
+
 	timeout := time.After(timeoutDuration)
 	ticker := time.NewTicker(20 * time.Millisecond)
 	defer ticker.Stop()
@@ -174,13 +218,25 @@ func receivePacket(t *testing.T, listener *TrapListener, timeoutDuration time.Du
 		select {
 		// Got a timeout! fail with a timeout error
 		case <-timeout:
+			fmt.Printf("JMW receivePacket() got timeout\n")
+			//t.FailNow() //JMW ? fail test immediately
 			t.Error("timeout error waiting for trap")
-			return nil
+			return nil //JMW this doesn't fail the test immediately, waits for test to timeout
 		case packet := <-listener.packets:
+			fmt.Printf("JMW receivePacket() got packet %v\n", packet)
+			//t.FailNow() //JMW DOES fail test immediately
 			return packet
 		case <-ticker.C:
+			fmt.Printf("JMW receivePacket() got ticker\n")
+			//t.FailNow() //JMW doesn't fail test immediately
 			if listener.receivedTrapsCount.Load() > 0 {
-				return nil // We received an invalid packet
+				fmt.Printf("JMW receivePacket() got ticker - 'We received an invalid packet'\n")
+				//JMW how is ticker different from timeout?
+				//JMW do t.error before returning nil?
+				t.Error("JMW ticker with non-zero receivedTrapsCount")
+				//JMWt.Fatal("JMW ticker with non-zero receivedTrapsCount")
+				//JMWTRY
+				return nil // We received an invalid packet //JMW this doesn't fail the test immediately, waits for test to timeout
 			}
 		}
 	}
