@@ -108,8 +108,9 @@ func TestServerV3(t *testing.T) {
 	Configure(t, config)
 
 	//JMWORIG
-	packetOutChan := make(PacketsChannel)
+	//packetOutChan := make(PacketsChannel)
 	//packetOutChan := make(PacketsChannel, 1) //JMWJMW buffered channel works better - it doesn't block/hang test for timeout/ticket cases of select
+	packetOutChan := make(PacketsChannel, packetsChanSize) //JMWJMW same as server.go
 	//JMWJMW where else is this used?  What type of channels are used?  buffered or non-buffered?
 	trapListener, err := startSNMPTrapListener(config, mockSender, packetOutChan)
 	require.NoError(t, err)

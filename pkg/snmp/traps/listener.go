@@ -94,7 +94,7 @@ func (t *TrapListener) receiveTrap(p *gosnmp.SnmpPacket, u *net.UDPAddr) {
 	t.receivedTrapsCount.Inc()
 	fmt.Printf("JMW receiveTrap() incremented receivedTrapsCount=%v\n", t.receivedTrapsCount)
 	//JMWREPRO2
-	//time.Sleep(21 * time.Millisecond) //JMWREPROS receivePacket() ticker return nil after receivedTrapsCount is incrementes but before trap is sent
+	time.Sleep(21 * time.Millisecond) //JMWREPROS receivePacket() ticker return nil after receivedTrapsCount is incrementes but before trap is sent
 
 	if err := validatePacket(p, t.config); err != nil {
 		log.Debugf("Invalid credentials from %s on listener %s, dropping traps", u.String(), t.config.Addr())
