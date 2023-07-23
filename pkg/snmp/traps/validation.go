@@ -13,7 +13,7 @@ import (
 
 func validatePacket(p *gosnmp.SnmpPacket, c Config) error {
 	if p.Version == gosnmp.Version3 {
-		// v3 Packets are already decrypted and validated by gosnmp
+		// v3 Packets are already decrypted and validated by gosnmp //JMW look at this
 		return nil
 	}
 

@@ -94,7 +94,7 @@ func (t *TrapListener) receiveTrap(p *gosnmp.SnmpPacket, u *net.UDPAddr) {
 	t.receivedTrapsCount.Inc()
 	fmt.Printf("JMW receiveTrap() incremented receivedTrapsCount=%v\n", t.receivedTrapsCount)
 	//JMWREPRO2
-	//time.Sleep(21 * time.Millisecond) //JMWREPROS receivePacket() ticker return nil
+	//time.Sleep(21 * time.Millisecond) //JMWREPROS receivePacket() ticker return nil after receivedTrapsCount is incrementes but before trap is sent
 
 	if err := validatePacket(p, t.config); err != nil {
 		log.Debugf("Invalid credentials from %s on listener %s, dropping traps", u.String(), t.config.Addr())
@@ -105,7 +105,6 @@ func (t *TrapListener) receiveTrap(p *gosnmp.SnmpPacket, u *net.UDPAddr) {
 	log.Debugf("Packet received from %s on listener %s", u.String(), t.config.Addr())
 	trapsPackets.Add(1)
 	fmt.Printf("JMW receiveTrap() before t.packets <- packet\n") //JMWJMW BLOCKS!
-	t.packets <- packet //JMWJMW will this get an error if receiving side of channel goes away?
+	t.packets <- packet
 	fmt.Printf("JMW receiveTrap() after t.packets <- packet\n")
-	//JMW close channel? doesn't seem to help) close(t.packets)
 }

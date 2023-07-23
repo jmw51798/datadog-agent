@@ -109,7 +109,7 @@ func TestServerV3(t *testing.T) {
 
 	//JMWORIG
 	packetOutChan := make(PacketsChannel)
-	//packetOutChan := make(PacketsChannel, 1) //JMW try buffered channel to see if it works better for timeout/ticket cases of select - IT DOES
+	//packetOutChan := make(PacketsChannel, 1) //JMWJMW buffered channel works better - it doesn't block/hang test for timeout/ticket cases of select
 	//JMWJMW where else is this used?  What type of channels are used?  buffered or non-buffered?
 	trapListener, err := startSNMPTrapListener(config, mockSender, packetOutChan)
 	require.NoError(t, err)
@@ -124,11 +124,9 @@ func TestServerV3(t *testing.T) {
 		PrivacyPassphrase:        "password",
 		PrivacyProtocol:          gosnmp.AES,
 	})
-	//t.FailNow() //JMW DOES fail test immediately
-	packet := receivePacket(t, trapListener, defaultTimeout) //JMW defaultTimeout=1s
+	packet := receivePacket(t, trapListener, defaultTimeout)
 	duration := time.Now().Sub(start)
 	fmt.Println("receivePacket() returned after", duration)
-	//t.FailNow() //JMW doesn't fail test immediately
 	fmt.Printf("JMW receivePacket() returned packet=%v\n", packet)
 	// https://github.com/stretchr/testify
 	// The require package provides same global functions as the assert package, but instead of returning a boolean result they terminate current test. These functions must be called from the goroutine running the test or benchmark function, not from other goroutines created during the test. Otherwise race conditions may occur.
@@ -136,17 +134,13 @@ func TestServerV3(t *testing.T) {
 	// https://pkg.go.dev/testing#T.FailNow
 	// FailNow marks the function as having failed and stops its execution by calling runtime.Goexit (which then runs all deferred calls in the current goroutine). Execution will continue at the next test or benchmark. FailNow must be called from the goroutine running the test or benchmark function, not from other goroutines created during the test. Calling FailNow does not stop those other goroutines.
 
-	fmt.Printf("JMW1\n")
-	if packet == nil {
-		t.FailNow()
-	}
 	require.NotNil(t, packet)
 	assertVariables(t, packet)
-	assertVariables(t, packet) //JMW doesn't fail test immediately
+	assertVariables(t, packet)
 	fmt.Printf("JMW end of TestServerV3()\n")
 }
 
-func TestServerV3BadCredentials(t *testing.T) {
+func TestServerV3BadCredentials(t *testing.T) { //JMWJMW
 	mockSender := mocksender.NewMockSender("snmp-traps-telemetry")
 	mockSender.SetupAcceptAll()
 
@@ -164,7 +158,7 @@ func TestServerV3BadCredentials(t *testing.T) {
 		AuthoritativeEngineID:    "foobarbaz",
 		AuthenticationPassphrase: "password",
 		AuthenticationProtocol:   gosnmp.SHA,
-		PrivacyPassphrase:        "wrong_password",
+		PrivacyPassphrase:        "wrong_password", //JMWJMW
 		PrivacyProtocol:          gosnmp.AES,
 	})
 	assertNoPacketReceived(t, trapListener)
@@ -203,20 +197,17 @@ func receivePacket(t *testing.T, listener *TrapListener, timeoutDuration time.Du
 		// Got a timeout! fail with a timeout error
 		case <-timeout:
 			fmt.Printf("JMW receivePacket() got timeout\n")
-			//t.FailNow() //JMW ? fail test immediately
 			t.Error("timeout error waiting for trap")
-			return nil //JMW this doesn't fail the test immediately, waits for test to timeout
+			return nil
 		case packet := <-listener.packets:
 			fmt.Printf("JMW receivePacket() got packet %v\n", packet)
-			//t.FailNow() //JMW DOES fail test immediately
 			return packet
 		case <-ticker.C:
 			fmt.Printf("JMW receivePacket() got ticker\n")
-			//t.FailNow() //JMW doesn't fail test immediately
 			if listener.receivedTrapsCount.Load() > 0 {
 				fmt.Printf("JMW receivePacket() got ticker - 'We received an invalid packet'\n")
 				//JMW how is ticker different from timeout?
-				//JMW do t.error before returning nil?
+				//JMWJMW did I add this? do t.error before returning nil?  Do all tests do require.NotNil() on receivePacket return value?  If so t.Error should not be needed anywhere in the func, right?
 				t.Error("JMW ticker with non-zero receivedTrapsCount")
 				//JMWt.Fatal("JMW ticker with non-zero receivedTrapsCount")
 				//JMWTRY
@@ -230,7 +221,7 @@ func assertNoPacketReceived(t *testing.T, listener *TrapListener) {
 	select {
 	case <-listener.packets:
 		t.Error("Unexpectedly received an unauthorized packet")
-	case <-time.After(100 * time.Millisecond):
+	case <-time.After(100 * time.Millisecond): //JMW is 100ms enough?
 		break
 	}
 }
